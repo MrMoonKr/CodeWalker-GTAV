@@ -41,30 +41,30 @@ namespace CodeWalker.GameFiles
 {
     public static class GTA5Keys
     {
-        public static string ToS = "(c)2017";
+        public static string            ToS = "(c)2017";
 
         // aes decryption/encryption key...
-        public static byte[] PC_AES_KEY; // 32
+        public static byte[]            PC_AES_KEY;             // 32
 
         // ng decryption/encryption expanded keys...      
-        public static byte[][] PC_NG_KEYS; // 101, 272
+        public static byte[][]          PC_NG_KEYS;             // 101, 272
 
         // ng decryption tables...       
-        public static uint[][][] PC_NG_DECRYPT_TABLES; // 17, 16, 256
+        public static uint[][][]        PC_NG_DECRYPT_TABLES;   // 17, 16, 256
 
         // ng encryption tables...
         // -> some of these tables can be calculated from decryption tables
-        public static uint[][][] PC_NG_ENCRYPT_TABLES; // 17, 16, 256
+        public static uint[][][]        PC_NG_ENCRYPT_TABLES;   // 17, 16, 256
 
         // ng encryption look-up-tables
         // -> some of these look-up-tables can be calculated from decryption tables
-        public static GTA5NGLUT[][] PC_NG_ENCRYPT_LUTs; // 17, 16
+        public static GTA5NGLUT[][]     PC_NG_ENCRYPT_LUTs;     // 17, 16
 
         // hash lookup-table...
-        public static byte[] PC_LUT; // 256
+        public static byte[]            PC_LUT;                 // 256
 
 
-        public static uint[] PC_AWC_KEY; // 16
+        public static uint[]            PC_AWC_KEY;             // 16
 
 
 
@@ -73,15 +73,15 @@ namespace CodeWalker.GameFiles
             var exeStr = new MemoryStream(exeData);
 
             updateStatus("Searching for AES key...");
-            PC_AES_KEY = HashSearch.SearchHash(exeStr, GTA5KeyHashes.PC_AES_KEY_HASH, 0x20);
+            PC_AES_KEY = HashSearch.SearchHash(exeStr, GTA5KeyHashes.PC_AES_KEY_HASH, 0x20); // 32
             //updateStatus("aes key found");
 
             updateStatus("Searching for NG keys...");
-            PC_NG_KEYS = HashSearch.SearchHashes(exeStr, GTA5KeyHashes.PC_NG_KEY_HASHES, 0x110);
+            PC_NG_KEYS = HashSearch.SearchHashes(exeStr, GTA5KeyHashes.PC_NG_KEY_HASHES, 0x110); // 272
             //updateStatus("ng keys found");
 
             updateStatus("Searching for NG decrypt tables...");
-            var tabs = HashSearch.SearchHashes(exeStr, GTA5KeyHashes.PC_NG_DECRYPT_TABLE_HASHES, 0x400);
+            var tabs = HashSearch.SearchHashes(exeStr, GTA5KeyHashes.PC_NG_DECRYPT_TABLE_HASHES, 0x400); // 1024
             //updateStatus("ng decrypt tables found");
 
             updateStatus("Searching for NG hash lookup tables...");
@@ -99,7 +99,7 @@ namespace CodeWalker.GameFiles
                 }
             }
 
-            PC_LUT = HashSearch.SearchHash(exeStr, GTA5KeyHashes.PC_LUT_HASH, 0x100);
+            PC_LUT = HashSearch.SearchHash(exeStr, GTA5KeyHashes.PC_LUT_HASH, 0x100); // 256
             //updateStatus("ng hash LUTs found");
 
 
@@ -321,10 +321,16 @@ namespace CodeWalker.GameFiles
 
     public static class GTA5KeyHashes
     {
-        // aes decryption/encryption key...
-        public static byte[] PC_AES_KEY_HASH = new byte[] { 0xA0, 0x79, 0x61, 0x28, 0xA7, 0x75, 0x72, 0x0A, 0xC2, 0x04, 0xD9, 0x81, 0x9F, 0x68, 0xC1, 0x72, 0xE3, 0x95, 0x2C, 0x6D };
+        /// <summary>
+        /// SHA1 hash ( 20 bytes ) of the AES key
+        /// </summary>
+        public static byte[] PC_AES_KEY_HASH = new byte[] { 
+            0xA0, 0x79, 0x61, 0x28, 0xA7, 0x75, 0x72, 0x0A, 0xC2, 0x04, 0xD9, 0x81, 0x9F, 0x68, 0xC1, 0x72, 0xE3, 0x95, 0x2C, 0x6D 
+        };
 
-        // ng decryption/encryption expanded keys...
+        /// <summary>
+        /// SHA1 hashes ( [101][20] ) of the NG keys
+        /// </summary>
         public static byte[][] PC_NG_KEY_HASHES = new byte[101][] {
             new byte[] { 0xEB, 0x09, 0x15, 0x12, 0x03, 0x97, 0xCE, 0x2E, 0x17, 0x82, 0x8D, 0xD7, 0x7E, 0x32, 0x18, 0xD9, 0x77, 0xA1, 0x85, 0xF7 },
             new byte[] { 0xD7, 0x40, 0xB3, 0xC8, 0x9F, 0xE3, 0xA1, 0x9A, 0x92, 0x65, 0xDC, 0xEE, 0xFB, 0x45, 0x4C, 0x16, 0x2D, 0xB4, 0x53, 0x68 },
@@ -426,9 +432,12 @@ namespace CodeWalker.GameFiles
             new byte[] { 0xE7, 0x68, 0x6E, 0x1F, 0x20, 0x62, 0x69, 0xD7, 0x2A, 0xB6, 0x7B, 0xEB, 0xB5, 0xB9, 0x2C, 0xBD, 0x43, 0xCB, 0xC8, 0xF4 },
             new byte[] { 0x68, 0xFF, 0xD2, 0xB6, 0x25, 0xA3, 0x06, 0x7C, 0xFA, 0xE5, 0x47, 0x84, 0x89, 0x83, 0x5F, 0xEC, 0x91, 0x0E, 0x13, 0x93 },
             new byte[] { 0x92, 0xF9, 0xF4, 0x11, 0xB7, 0xE9, 0xDC, 0x7E, 0xDE, 0xE4, 0xF2, 0x22, 0x3A, 0x38, 0xC2, 0x7D, 0x57, 0xC2, 0xDB, 0xB8 },
-            new byte[] { 0xB3, 0x9B, 0x96, 0xD9, 0x78, 0xE3, 0xF5, 0xC5, 0xB7, 0x6B, 0x12, 0x07, 0xC8, 0xAA, 0x1D, 0xB1, 0x4C, 0x85, 0x38, 0x39 }};
+            new byte[] { 0xB3, 0x9B, 0x96, 0xD9, 0x78, 0xE3, 0xF5, 0xC5, 0xB7, 0x6B, 0x12, 0x07, 0xC8, 0xAA, 0x1D, 0xB1, 0x4C, 0x85, 0x38, 0x39 }
+        };
 
-        // ng decryption tables...
+        /// <summary>
+        /// SHA1 hashes ( [272][20] ) of the PC NG decryption tables.
+        /// </summary>
         public static byte[][] PC_NG_DECRYPT_TABLE_HASHES = new byte[][] {
             new byte[] { 0xCE, 0xAB, 0x97, 0x16, 0xBD, 0xEC, 0x4E, 0xB6, 0xB0, 0x28, 0xD3, 0x56, 0x39, 0xE4, 0x5F, 0x2F, 0x3D, 0x8A, 0xC0, 0x3A },
             new byte[] { 0x61, 0x86, 0x8D, 0xFD, 0xF3, 0x86, 0x92, 0xB0, 0xC0, 0x71, 0xF6, 0xB1, 0xC8, 0x09, 0x67, 0x41, 0x22, 0xD4, 0xB3, 0x03 },
@@ -701,10 +710,15 @@ namespace CodeWalker.GameFiles
             new byte[] { 0x8F, 0x9E, 0xC7, 0xAB, 0x3F, 0x5B, 0x97, 0xCF, 0xAC, 0x1D, 0xBA, 0x83, 0x88, 0x67, 0x90, 0xEF, 0xE1, 0xEF, 0xA4, 0xE1 },
             new byte[] { 0x2C, 0xF3, 0xF2, 0x12, 0x07, 0xDD, 0x8F, 0x2C, 0xBA, 0x24, 0x10, 0x4F, 0xDA, 0x7B, 0xEC, 0x21, 0x01, 0x16, 0xD4, 0x45 },
             new byte[] { 0xB9, 0xE1, 0x5D, 0xE5, 0xA0, 0x83, 0xC1, 0xAA, 0x9E, 0xAB, 0x09, 0x9B, 0x7E, 0x09, 0x39, 0x5E, 0x2C, 0xE0, 0x2B, 0xE4 },
-            new byte[] { 0x43, 0x23, 0xB0, 0xAA, 0x5F, 0x01, 0x51, 0x74, 0x89, 0x04, 0xA4, 0xB2, 0xC4, 0x03, 0x3D, 0x5E, 0x9A, 0xF0, 0x1D, 0xBB }};
+            new byte[] { 0x43, 0x23, 0xB0, 0xAA, 0x5F, 0x01, 0x51, 0x74, 0x89, 0x04, 0xA4, 0xB2, 0xC4, 0x03, 0x3D, 0x5E, 0x9A, 0xF0, 0x1D, 0xBB }
+        };
 
-        // hash lookup-table...
-        public static byte[] PC_LUT_HASH = new byte[] { 0x88, 0xD3, 0x79, 0x3B, 0x8E, 0x7A, 0x6C, 0xAC, 0xAA, 0x8B, 0x89, 0x28, 0x97, 0xBE, 0x72, 0x8D, 0x9E, 0x7F, 0xBA, 0xD4 };
+        /// <summary>
+        /// SHA1 hash ( 20 bytes ) of the PC LUT used to verify correctness.
+        /// </summary>
+        public static byte[] PC_LUT_HASH = new byte[] { 
+            0x88, 0xD3, 0x79, 0x3B, 0x8E, 0x7A, 0x6C, 0xAC, 0xAA, 0x8B, 0x89, 0x28, 0x97, 0xBE, 0x72, 0x8D, 0x9E, 0x7F, 0xBA, 0xD4 
+        };
     }
 
 
@@ -739,37 +753,43 @@ namespace CodeWalker.GameFiles
 
     public static class HashSearch
     {
-        private const long BLOCK_LENGTH = 1048576;
+        private const long BLOCK_LENGTH = 1048576; // 1 MB = 1024 * 1024
         private const long ALIGN_LENGTH = 8;
 
-        public static byte[] SearchHash(Stream stream, byte[] hash, int length = 32)
+        public static byte[] SearchHash( Stream stream, byte[] hash, int length = 32 )
         {
-            return SearchHashes(stream, new List<byte[]> { hash }, length)[0];
+            return SearchHashes( stream, new List<byte[]> { hash }, length )[0];
         }
 
-        public static byte[][] SearchHashes(Stream stream, IList<byte[]> hashes, int length = 32)
+        /// <summary>
+        /// 스트림에서 length 바이트 단위로 해시를 계산하여 주어진 해시 목록과 비교합니다.  
+        /// 스트림에서 데이터를 읽어들이는 간격은 ALIGN_LENGTH( 8 바이트 ) 단위로 이루어집니다.  
+        /// 그리고, 스트림은 BLOCK_LENGTH( 1 MB ) 단위로 병렬 처리됩니다.  
+        /// </summary>
+        public static byte[][] SearchHashes( Stream stream, IList<byte[]> hashes, int length = 32 )
         {
             var result = new byte[hashes.Count][];
 
-            Parallel.For(0, (stream.Length / BLOCK_LENGTH), (long k) => {
+            Parallel.For( 0, ( stream.Length / BLOCK_LENGTH ), ( long k ) => {
 
-                var hashProvider = new SHA1CryptoServiceProvider();
-                var buffer = new byte[length];
-                for (long i = 0; i < (BLOCK_LENGTH / ALIGN_LENGTH); i++)
+                var hashProvider    = new SHA1CryptoServiceProvider();
+                var buffer          = new byte[length];
+
+                for ( long i = 0 ; i < ( BLOCK_LENGTH / ALIGN_LENGTH ) ; i++ )
                 {
                     var position = k * BLOCK_LENGTH + i * ALIGN_LENGTH;
-                    if (position >= stream.Length)
+                    if ( position >= stream.Length )
                         continue;
 
-                    lock (stream)
+                    lock ( stream )
                     {
                         stream.Position = position;
-                        stream.Read(buffer, 0, length);
+                        stream.Read( buffer, 0, length );
                     }
 
-                    var hash = hashProvider.ComputeHash(buffer);
-                    for (int j = 0; j < hashes.Count; j++)
-                        if (hash.SequenceEqual(hashes[j]))
+                    var hash = hashProvider.ComputeHash( buffer ); // SHA1 = 20 bytes
+                    for ( int j = 0 ; j < hashes.Count ; j++ )
+                        if ( hash.SequenceEqual( hashes[j] ) )
                             result[j] = (byte[])buffer.Clone();
                 }
 
