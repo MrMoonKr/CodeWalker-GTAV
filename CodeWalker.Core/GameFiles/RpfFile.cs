@@ -10,69 +10,78 @@ using System.Threading.Tasks;
 namespace CodeWalker.GameFiles
 {
 
+    /// <summary>
+    /// 에셋 패키지 파일(RPF)입니다.  
+    /// 일종의 폴더 처럼 동작합니다.  
+    /// </summary>
     public class RpfFile
     {
-        public string Name { get; set; } //name of this RPF file/package
-        public string NameLower { get; set; }
-        public string Path { get; set; } //path within the RPF structure
-        public string FilePath { get; set; } //full file path of the RPF
-        public long FileSize { get; set; }
-        public string LastError { get; set; }
-        public Exception LastException { get; set; }
+        public string           Name { get; set; }          //name of this RPF file/package
+        public string           NameLower { get; set; }
+        public string           Path { get; set; }          //path within the RPF structure
+        public string           FilePath { get; set; }      // 전체 파일 경로 full file path of the RPF
+        public long             FileSize { get; set; }      // 파일 크기
+        public string           LastError { get; set; }
+        public Exception        LastException { get; set; }
 
         public RpfDirectoryEntry Root { get; set; }
 
-        public bool IsAESEncrypted { get; set; }
-        public bool IsNGEncrypted { get; set; }
+        public bool             IsAESEncrypted { get; set; }
+        public bool             IsNGEncrypted { get; set; }
 
 
         //offset in the current file
-        public long StartPos { get; set; }
+        public long             StartPos { get; set; }
 
         //header data
-        public uint Version { get; set; }
-        public uint EntryCount { get; set; }
-        public uint NamesLength { get; set; }
-        public RpfEncryption Encryption { get; set; }
+        public uint             Version { get; set; }
+        public uint             EntryCount { get; set; }
+        public uint             NamesLength { get; set; }
+        public RpfEncryption    Encryption { get; set; }
 
         //object linkage
-        public List<RpfEntry> AllEntries { get; set; }
-        public List<RpfFile> Children { get; set; }
-        public RpfFile Parent { get; set; }
+        public List<RpfEntry>   AllEntries { get; set; }
+        public List<RpfFile>    Children { get; set; }
+        public RpfFile          Parent { get; set; }
         public RpfBinaryFileEntry ParentFileEntry { get; set; }
 
-        public BinaryReader CurrentFileReader { get; set; } //for temporary use while reading header
+        public BinaryReader     CurrentFileReader { get; set; } //for temporary use while reading header
 
 
 
-        public uint TotalFileCount { get; set; }
-        public uint TotalFolderCount { get; set; }
-        public uint TotalResourceCount { get; set; }
-        public uint TotalBinaryFileCount { get; set; }
-        public uint GrandTotalRpfCount { get; set; }
-        public uint GrandTotalFileCount { get; set; }
-        public uint GrandTotalFolderCount { get; set; }
-        public uint GrandTotalResourceCount { get; set; }
-        public uint GrandTotalBinaryFileCount { get; set; }
-        public long ExtractedByteCount { get; set; }
+        public uint             TotalFileCount { get; set; }
+        public uint             TotalFolderCount { get; set; }
+        public uint             TotalResourceCount { get; set; }
+        public uint             TotalBinaryFileCount { get; set; }
+        public uint             GrandTotalRpfCount { get; set; }
+        public uint             GrandTotalFileCount { get; set; }
+        public uint             GrandTotalFolderCount { get; set; }
+        public uint             GrandTotalResourceCount { get; set; }
+        public uint             GrandTotalBinaryFileCount { get; set; }
+        public long             ExtractedByteCount { get; set; }
 
 
-        public RpfFile(string fpath, string relpath) //for a ROOT filesystem RPF
+        /// <summary>
+        /// 파일 형태로 된 RPF 패키지를 엽니다.
+        /// </summary>
+        /// <param name="fpath"></param>
+        /// <param name="relpath"></param>
+        public RpfFile( string fpath , string relpath ) //for a ROOT filesystem RPF
         {
-            FileInfo fi = new FileInfo(fpath);
-            Name = fi.Name;
-            NameLower = Name.ToLowerInvariant();
-            Path = relpath.ToLowerInvariant();
-            FilePath = fpath;
-            FileSize = fi.Length;
+            FileInfo fi         = new FileInfo( fpath );
+            Name                = fi.Name;
+            NameLower           = Name.ToLowerInvariant();
+            Path                = relpath.ToLowerInvariant();
+            FilePath            = fpath;
+            FileSize            = fi.Length;
         }
-        public RpfFile(string name, string path, long filesize) //for a child RPF
+        public RpfFile( string name , string path , long filesize ) //for a child RPF
         {
-            Name = name;
-            NameLower = Name.ToLowerInvariant();
-            Path = path.ToLowerInvariant();
-            FilePath = path;
-            FileSize = filesize;
+            Name                = name;
+            NameLower           = Name.ToLowerInvariant();
+            Path                = path.ToLowerInvariant();
+            FilePath            = path;
+            FileSize            = filesize;
         }
 
         // Returns string to new path
@@ -113,16 +122,24 @@ namespace CodeWalker.GameFiles
             return GetTopParent().Path.StartsWith(@"mods\");
         }
 
+        /// <summary>
+        /// 최상위 부모 RPF 파일을 반환합니다.
+        /// </summary>
+        /// <returns></returns>
         public RpfFile GetTopParent()
         {
             RpfFile pfile = this;
-            while (pfile.Parent != null)
+            while ( pfile.Parent != null )
             {
                 pfile = pfile.Parent;
             }
             return pfile;
         }
         
+        /// <summary>
+        /// 자신이 저장된 물리적 파일 경로를 반환합니다.  
+        /// </summary>
+        /// <returns></returns>
         public string GetPhysicalFilePath()
         {
             return GetTopParent().FilePath;
@@ -130,139 +147,144 @@ namespace CodeWalker.GameFiles
 
 
 
-
-        private void ReadHeader(BinaryReader br)
+        /// <summary>
+        /// 파일 헤더 읽기.  
+        /// 내부에 저장된 에셋 관련 정보를 읽어들입니다.  
+        /// </summary>
+        /// <param name="br"></param>
+        /// <exception cref="Exception"></exception>
+        private void ReadHeader( BinaryReader br )
         {
-            CurrentFileReader = br;
+            CurrentFileReader   = br;
 
-            StartPos = br.BaseStream.Position;
+            StartPos            = br.BaseStream.Position;
 
-            Version = br.ReadUInt32(); //RPF Version - GTAV should be 0x52504637 (1380992567)
-            EntryCount = br.ReadUInt32(); //Number of Entries
-            NamesLength = br.ReadUInt32();
-            Encryption = (RpfEncryption)br.ReadUInt32(); //0x04E45504F (1313165391): none;  0x0ffffff9 (268435449): AES
+            Version             = br.ReadUInt32(); //RPF Version - GTAV should be 0x52504637 (1380992567)
+            EntryCount          = br.ReadUInt32(); //Number of Entries
+            NamesLength         = br.ReadUInt32();
+            Encryption          = ( RpfEncryption )br.ReadUInt32(); //0x04E45504F (1313165391): none;  0x0ffffff9 (268435449): AES
 
-            if (Version != 0x52504637)
+            if ( Version != 0x52504637 ) // "RPF7" reversed
             {
-                throw new Exception("Invalid Resource - not GTAV!");
+                throw new Exception( "Invalid Resource - not GTAV!" );
             }
 
-            byte[] entriesdata = br.ReadBytes((int)EntryCount * 16); //4x uints each
-            byte[] namesdata = br.ReadBytes((int)NamesLength);
+            byte[] entriesdata  = br.ReadBytes( (int)EntryCount * 16 ); // 4x uints each
+            byte[] namesdata    = br.ReadBytes( (int)NamesLength );
 
-            switch (Encryption)
+            switch ( Encryption )
             {
-                case RpfEncryption.NONE: //no encryption
-                case RpfEncryption.OPEN: //OpenIV style RPF with unencrypted TOC
-                    break;
-                case RpfEncryption.AES:
-                    entriesdata = GTACrypto.DecryptAES(entriesdata);
-                    namesdata = GTACrypto.DecryptAES(namesdata);
-                    IsAESEncrypted = true;
-                    break;
-                case RpfEncryption.NG:
-                    entriesdata = GTACrypto.DecryptNG(entriesdata, Name, (uint)FileSize);
-                    namesdata = GTACrypto.DecryptNG(namesdata, Name, (uint)FileSize);
-                    IsNGEncrypted = true;
-                    break;
-                default: //unknown encryption type? assume NG.. never seems to get here
-                    entriesdata = GTACrypto.DecryptNG(entriesdata, Name, (uint)FileSize);
-                    namesdata = GTACrypto.DecryptNG(namesdata, Name, (uint)FileSize);
-                    break;
+            case RpfEncryption.NONE: //no encryption
+            case RpfEncryption.OPEN: //OpenIV style RPF with unencrypted TOC
+                break;
+            case RpfEncryption.AES:
+                entriesdata     = GTACrypto.DecryptAES( entriesdata );
+                namesdata       = GTACrypto.DecryptAES( namesdata );
+                IsAESEncrypted  = true;
+                break;
+            case RpfEncryption.NG:
+                entriesdata     = GTACrypto.DecryptNG( entriesdata , Name , ( uint )FileSize );
+                namesdata       = GTACrypto.DecryptNG( namesdata , Name , ( uint )FileSize );
+                IsNGEncrypted   = true;
+                break;
+            default: //unknown encryption type? assume NG.. never seems to get here
+                entriesdata     = GTACrypto.DecryptNG( entriesdata , Name , ( uint )FileSize );
+                namesdata       = GTACrypto.DecryptNG( namesdata , Name , ( uint )FileSize );
+                break;
             }
 
 
-            var entriesrdr = new DataReader(new MemoryStream(entriesdata));
-            var namesrdr = new DataReader(new MemoryStream(namesdata));
-            AllEntries = new List<RpfEntry>();
-            TotalFileCount = 0;
-            TotalFolderCount = 0;
-            TotalResourceCount = 0;
+            var entriesrdr      = new DataReader( new MemoryStream( entriesdata ) );
+            var namesrdr        = new DataReader( new MemoryStream( namesdata ) );
+            AllEntries          = new List<RpfEntry>();
+            TotalFileCount      = 0;
+            TotalFolderCount    = 0;
+            TotalResourceCount  = 0;
             TotalBinaryFileCount = 0;
 
-            for (uint i = 0; i < EntryCount; i++)
+            for ( uint i = 0 ; i < EntryCount ; i++ )
             {
                 //entriesrdr.Position += 4;
-                uint y = entriesrdr.ReadUInt32();
-                uint x = entriesrdr.ReadUInt32();
+                uint y          = entriesrdr.ReadUInt32();
+                uint x          = entriesrdr.ReadUInt32();
                 entriesrdr.Position -= 8;
 
                 RpfEntry e;
 
-                if (x == 0x7fffff00) //directory entry
+                if ( x == 0x7fffff00 ) // directory entry
                 {
-                    e = new RpfDirectoryEntry();
+                    e           = new RpfDirectoryEntry();
                     TotalFolderCount++;
                 }
-                else if ((x & 0x80000000) == 0) //binary file entry
+                else if ( ( x & 0x80000000 ) == 0 ) // binary file entry
                 {
-                    e = new RpfBinaryFileEntry();
+                    e           = new RpfBinaryFileEntry();
                     TotalBinaryFileCount++;
                     TotalFileCount++;
                 }
                 else //assume resource file entry
                 {
-                    e = new RpfResourceFileEntry();
+                    e           = new RpfResourceFileEntry();
                     TotalResourceCount++;
                     TotalFileCount++;
                 }
 
-                e.File = this;
-                e.H1 = y;
-                e.H2 = x;
+                e.File  = this;
+                e.H1    = y;
+                e.H2    = x;
 
-                e.Read(entriesrdr);
+                e.Read( entriesrdr );
 
                 namesrdr.Position = e.NameOffset;
                 e.Name = namesrdr.ReadString();
-                if (e.Name.Length > 256)
+                if ( e.Name.Length > 256 )
                 {
                     // long names can freeze the RPFExplorer
-                    e.Name = e.Name.Substring(0, 256);
+                    e.Name = e.Name.Substring( 0 , 256 );
                 }
                 e.NameLower = e.Name.ToLowerInvariant();
 
-                if ((e is RpfFileEntry) && string.IsNullOrEmpty(e.Name))
+                if ( ( e is RpfFileEntry ) && string.IsNullOrEmpty( e.Name ) )
                 {
                 }
-                if ((e is RpfResourceFileEntry))// && string.IsNullOrEmpty(e.Name))
+                if ( ( e is RpfResourceFileEntry ) )// && string.IsNullOrEmpty(e.Name))
                 {
                     var rfe = e as RpfResourceFileEntry;
-                    rfe.IsEncrypted = rfe.NameLower.EndsWith(".ysc");//any other way to know..?
+                    rfe.IsEncrypted = rfe.NameLower.EndsWith( ".ysc" );//any other way to know..?
                 }
 
-                AllEntries.Add(e);
+                AllEntries.Add( e );
             }
 
 
 
-            Root = (RpfDirectoryEntry)AllEntries[0];
+            Root = ( RpfDirectoryEntry )AllEntries[ 0 ];
             Root.Path = Path.ToLowerInvariant();// + "\\" + Root.Name;
             var stack = new Stack<RpfDirectoryEntry>();
-            stack.Push(Root);
-            while (stack.Count > 0)
+            stack.Push( Root );
+            while ( stack.Count > 0 )
             {
                 var item = stack.Pop();
 
                 int starti = (int)item.EntriesIndex;
                 int endi = (int)(item.EntriesIndex + item.EntriesCount);
 
-                for (int i = starti; i < endi; i++)
+                for ( int i = starti ; i < endi ; i++ )
                 {
                     RpfEntry e = AllEntries[i];
                     e.Parent = item;
-                    if (e is RpfDirectoryEntry)
+                    if ( e is RpfDirectoryEntry )
                     {
                         RpfDirectoryEntry rde = e as RpfDirectoryEntry;
                         rde.Path = item.Path + "\\" + rde.NameLower;
-                        item.Directories.Add(rde);
-                        stack.Push(rde);
+                        item.Directories.Add( rde );
+                        stack.Push( rde );
                     }
-                    else if (e is RpfFileEntry)
+                    else if ( e is RpfFileEntry )
                     {
                         RpfFileEntry rfe = e as RpfFileEntry;
                         rfe.Path = item.Path + "\\" + rfe.NameLower;
-                        item.Files.Add(rfe);
+                        item.Files.Add( rfe );
                     }
                 }
             }
@@ -277,25 +299,25 @@ namespace CodeWalker.GameFiles
 
 
 
-        public void ScanStructure(Action<string> updateStatus, Action<string> errorLog)
+        public void ScanStructure( Action<string> updateStatus, Action<string> errorLog )
         {
-            using (BinaryReader br = new BinaryReader(File.OpenRead(FilePath)))
+            using ( BinaryReader br = new BinaryReader( File.OpenRead( FilePath ) ) )
             {
                 try
                 {
-                    ScanStructure(br, updateStatus, errorLog);
+                    ScanStructure( br , updateStatus , errorLog );
                 }
-                catch (Exception ex)
+                catch ( Exception ex )
                 {
                     LastError = ex.ToString();
                     LastException = ex;
-                    errorLog(FilePath + ": " + LastError);
+                    errorLog( FilePath + ": " + LastError );
                 }
             }
         }
-        private void ScanStructure(BinaryReader br, Action<string> updateStatus, Action<string> errorLog)
+        private void ScanStructure( BinaryReader br, Action<string> updateStatus, Action<string> errorLog )
         {
-            ReadHeader(br);
+            ReadHeader( br );
 
             GrandTotalRpfCount = 1; //count this file..
             GrandTotalFileCount = 1; //start with this one.
@@ -305,20 +327,20 @@ namespace CodeWalker.GameFiles
 
             Children = new List<RpfFile>();
 
-            updateStatus?.Invoke("Scanning " + Path + "...");
+            updateStatus?.Invoke( "Scanning " + Path + "..." );
 
-            foreach (RpfEntry entry in AllEntries)
+            foreach ( RpfEntry entry in AllEntries )
             {
                 try
                 {
-                    if (entry is RpfBinaryFileEntry)
+                    if ( entry is RpfBinaryFileEntry )
                     {
                         RpfBinaryFileEntry binentry = entry as RpfBinaryFileEntry;
 
                         var lname = binentry.NameLower;
-                        if (lname.EndsWith(".rpf") && IsValidPath(binentry.Path))
+                        if ( lname.EndsWith( ".rpf" ) && IsValidPath( binentry.Path ) )
                         {
-                            br.BaseStream.Position = StartPos + ((long)binentry.FileOffset * 512);
+                            br.BaseStream.Position = StartPos + ( ( long )binentry.FileOffset * 512 );
 
                             long l = binentry.GetFileSize();
 
@@ -326,7 +348,7 @@ namespace CodeWalker.GameFiles
                             subfile.Parent = this;
                             subfile.ParentFileEntry = binentry;
 
-                            subfile.ScanStructure(br, updateStatus, errorLog);
+                            subfile.ScanStructure( br , updateStatus , errorLog );
 
                             GrandTotalRpfCount += subfile.GrandTotalRpfCount;
                             GrandTotalFileCount += subfile.GrandTotalFileCount;
@@ -334,7 +356,7 @@ namespace CodeWalker.GameFiles
                             GrandTotalResourceCount += subfile.GrandTotalResourceCount;
                             GrandTotalBinaryFileCount += subfile.GrandTotalBinaryFileCount;
 
-                            Children.Add(subfile);
+                            Children.Add( subfile );
                         }
                         else
                         {
@@ -343,19 +365,19 @@ namespace CodeWalker.GameFiles
                             GrandTotalFileCount++;
                         }
                     }
-                    else if (entry is RpfResourceFileEntry)
+                    else if ( entry is RpfResourceFileEntry )
                     {
                         GrandTotalResourceCount++;
                         GrandTotalFileCount++;
                     }
-                    else if (entry is RpfDirectoryEntry)
+                    else if ( entry is RpfDirectoryEntry )
                     {
                         GrandTotalFolderCount++;
                     }
                 }
-                catch (Exception ex)
+                catch ( Exception ex )
                 {
-                    errorLog?.Invoke(entry.Path + ": " + ex.ToString());
+                    errorLog?.Invoke( entry.Path + ": " + ex.ToString() );
                 }
             }
 
@@ -2152,80 +2174,95 @@ namespace CodeWalker.GameFiles
         NG =   0x0FEFFFFF, //267386879
     }
 
-
-    [TypeConverter(typeof(ExpandableObjectConverter))] public abstract class RpfEntry
+    /// <summary>
+    /// archived asset entry (file or directory).
+    /// </summary>
+    [TypeConverter(typeof(ExpandableObjectConverter))] 
+    public abstract class RpfEntry
     {
-        public RpfFile File { get; set; }
+        public RpfFile          File { get; set; }
         public RpfDirectoryEntry Parent { get; set; }
 
-        public uint NameHash { get; set; }
-        public uint ShortNameHash { get; set; }
+        public uint             NameHash { get; set; }
+        public uint             ShortNameHash { get; set; }
 
-        public uint NameOffset { get; set; }
-        public string Name { get; set; }
-        public string NameLower { get; set; }
-        public string Path { get; set; }
+        public uint             NameOffset { get; set; }
+        public string           Name { get; set; }
+        public string           NameLower { get; set; }
+        public string           Path { get; set; }
 
-        public uint H1; //first 2 header values from RPF table...
-        public uint H2;
+        public uint             H1; //first 2 header values from RPF table...
+        public uint             H2;
 
-        public abstract void Read(DataReader reader);
-        public abstract void Write(DataWriter writer);
+        public abstract void    Read( DataReader reader );
+        public abstract void    Write( DataWriter writer );
 
-        public override string ToString()
+        public override string  ToString()
         {
             return Path;
         }
 
+        /// <summary>
+        /// name without extension.
+        /// </summary>
+        /// <returns></returns>
         public string GetShortName()
         {
             int ind = Name.LastIndexOf('.');
-            if (ind > 0)
+            if ( ind > 0 )
             {
-                return Name.Substring(0, ind);
+                return Name.Substring( 0 , ind );
             }
             return Name;
         }
+        /// <summary>
+        /// lowercase name without extension.
+        /// </summary>
+        /// <returns></returns>
         public string GetShortNameLower()
         {
-            if (NameLower == null)
+            if ( NameLower == null )
             {
                 NameLower = Name.ToLowerInvariant();
             }
             int ind = NameLower.LastIndexOf('.');
-            if (ind > 0)
+            if ( ind > 0 )
             {
-                return NameLower.Substring(0, ind);
+                return NameLower.Substring( 0 , ind );
             }
             return NameLower;
         }
     }
 
-    [TypeConverter(typeof(ExpandableObjectConverter))] public class RpfDirectoryEntry : RpfEntry
+    /// <summary>
+    /// archived asset directory entry.
+    /// </summary>
+    [TypeConverter(typeof(ExpandableObjectConverter))] 
+    public class RpfDirectoryEntry : RpfEntry
     {
         public uint EntriesIndex { get; set; }
         public uint EntriesCount { get; set; }
 
-        public List<RpfDirectoryEntry> Directories = new List<RpfDirectoryEntry>();
-        public List<RpfFileEntry> Files = new List<RpfFileEntry>();
+        public List<RpfDirectoryEntry>  Directories = new List<RpfDirectoryEntry>();
+        public List<RpfFileEntry>       Files       = new List<RpfFileEntry>();
 
-        public override void Read(DataReader reader)
+        public override void Read( DataReader reader )
         {
             NameOffset = reader.ReadUInt32();
             uint ident = reader.ReadUInt32();
-            if (ident != 0x7FFFFF00u)
+            if ( ident != 0x7FFFFF00u )
             {
-                throw new Exception("Error in RPF7 directory entry.");
+                throw new Exception( "Error in RPF7 directory entry." );
             }
             EntriesIndex = reader.ReadUInt32();
             EntriesCount = reader.ReadUInt32();
         }
-        public override void Write(DataWriter writer)
+        public override void Write( DataWriter writer )
         {
-            writer.Write(NameOffset);
-            writer.Write(0x7FFFFF00u);
-            writer.Write(EntriesIndex);
-            writer.Write(EntriesCount);
+            writer.Write( NameOffset );
+            writer.Write( 0x7FFFFF00u );
+            writer.Write( EntriesIndex );
+            writer.Write( EntriesCount );
         }
         public override string ToString()
         {
@@ -2233,65 +2270,69 @@ namespace CodeWalker.GameFiles
         }
     }
 
-    [TypeConverter(typeof(ExpandableObjectConverter))] public abstract class RpfFileEntry : RpfEntry
+    /// <summary>
+    /// archived asset file entry.
+    /// </summary>
+    [TypeConverter(typeof(ExpandableObjectConverter))] 
+    public abstract class RpfFileEntry : RpfEntry
     {
         public uint FileOffset { get; set; }
         public uint FileSize { get; set; }
         public bool IsEncrypted { get; set; }
 
         public abstract long GetFileSize();
-        public abstract void SetFileSize(uint s);
+        public abstract void SetFileSize( uint s );
     }
 
-    [TypeConverter(typeof(ExpandableObjectConverter))] public class RpfBinaryFileEntry : RpfFileEntry
+    [TypeConverter(typeof(ExpandableObjectConverter))] 
+    public class RpfBinaryFileEntry : RpfFileEntry
     {
         public uint FileUncompressedSize { get; set; }
         public uint EncryptionType { get; set; }
 
-        public override void Read(DataReader reader)
+        public override void Read( DataReader reader )
         {
-            ulong buf = reader.ReadUInt64();
-            NameOffset = (uint)buf & 0xFFFF;
-            FileSize = (uint)(buf >> 16) & 0xFFFFFF;
-            FileOffset = (uint)(buf >> 40) & 0xFFFFFF;
+            ulong buf   = reader.ReadUInt64();
+            NameOffset  = ( uint )buf & 0xFFFF;
+            FileSize    = ( uint )( buf >> 16 ) & 0xFFFFFF;
+            FileOffset  = ( uint )( buf >> 40 ) & 0xFFFFFF;
 
             FileUncompressedSize = reader.ReadUInt32();
 
-            EncryptionType = reader.ReadUInt32();
-
-            switch (EncryptionType)
+            EncryptionType      = reader.ReadUInt32();
+            switch ( EncryptionType )
             {
-                case 0: IsEncrypted = false; break;
-                case 1: IsEncrypted = true; break;
-                default:
-                    throw new Exception("Error in RPF7 file entry.");
+            case 0: IsEncrypted = false; break;
+            case 1: IsEncrypted = true; break;
+            default:
+                throw new Exception( "Error in RPF7 file entry." );
             }
 
         }
-        public override void Write(DataWriter writer)
+        public override void Write( DataWriter writer )
         {
-            writer.Write((ushort)NameOffset);
+            writer.Write( ( ushort )NameOffset );
 
             var buf1 = new byte[] {
                 (byte)((FileSize >> 0) & 0xFF),
                 (byte)((FileSize >> 8) & 0xFF),
                 (byte)((FileSize >> 16) & 0xFF)
             };
-            writer.Write(buf1);
+            writer.Write( buf1 );
 
             var buf2 = new byte[] {
                 (byte)((FileOffset >> 0) & 0xFF),
                 (byte)((FileOffset >> 8) & 0xFF),
                 (byte)((FileOffset >> 16) & 0xFF)
             };
-            writer.Write(buf2);
+            writer.Write( buf2 );
 
-            writer.Write(FileUncompressedSize);
+            writer.Write( FileUncompressedSize );
 
-            if (IsEncrypted)
-                writer.Write((uint)1);
+            if ( IsEncrypted )
+                writer.Write( ( uint )1 );
             else
-                writer.Write((uint)0);
+                writer.Write( ( uint )0 );
         }
         public override string ToString()
         {
@@ -2309,7 +2350,8 @@ namespace CodeWalker.GameFiles
         }
     }
 
-    [TypeConverter(typeof(ExpandableObjectConverter))] public class RpfResourceFileEntry : RpfFileEntry
+    [TypeConverter(typeof(ExpandableObjectConverter))] 
+    public class RpfResourceFileEntry : RpfFileEntry
     {
         public RpfResourcePageFlags SystemFlags { get; set; }
         public RpfResourcePageFlags GraphicsFlags { get; set; }
@@ -2634,28 +2676,30 @@ namespace CodeWalker.GameFiles
             }
         }
 
-        public override void Read(DataReader reader)
+        public override void Read( DataReader reader )
         {
-            NameOffset = reader.ReadUInt16();
+            NameOffset      = reader.ReadUInt16();
 
-            var buf1 = reader.ReadBytes(3);
-            FileSize = (uint)buf1[0] + (uint)(buf1[1] << 8) + (uint)(buf1[2] << 16);
+            var buf1        = reader.ReadBytes(3);
+            FileSize        = ( uint )buf1[ 0 ] + ( uint )( buf1[ 1 ] << 8 ) + ( uint )( buf1[ 2 ] << 16 );
 
-            var buf2 = reader.ReadBytes(3);
-            FileOffset = ((uint)buf2[0] + (uint)(buf2[1] << 8) + (uint)(buf2[2] << 16)) & 0x7FFFFF;
+            var buf2        = reader.ReadBytes(3);
+            FileOffset      = ( ( uint )buf2[ 0 ] + ( uint )( buf2[ 1 ] << 8 ) + ( uint )( buf2[ 2 ] << 16 ) ) & 0x7FFFFF;
 
-            SystemFlags = reader.ReadUInt32();
-            GraphicsFlags = reader.ReadUInt32();
+            SystemFlags     = reader.ReadUInt32();
+            GraphicsFlags   = reader.ReadUInt32();
 
             // there are sometimes resources with length=0xffffff which actually
             // means length>=0xffffff
-            if (FileSize == 0xFFFFFF)
+            if ( FileSize == 0xFFFFFF )
             {
                 BinaryReader cfr = File.CurrentFileReader;
-                long opos = cfr.BaseStream.Position;
-                cfr.BaseStream.Position = File.StartPos + ((long)FileOffset * 512); //need to use the base offset!!
-                var buf = cfr.ReadBytes(16);
-                FileSize = ((uint)buf[7] << 0) | ((uint)buf[14] << 8) | ((uint)buf[5] << 16) | ((uint)buf[2] << 24);
+                long opos   = cfr.BaseStream.Position;
+
+                cfr.BaseStream.Position = File.StartPos + ( ( long )FileOffset * 512 ); //need to use the base offset!!
+                var buf     = cfr.ReadBytes(16);
+                FileSize    = ( ( uint )buf[ 7 ] << 0 ) | ( ( uint )buf[ 14 ] << 8 ) | ( ( uint )buf[ 5 ] << 16 ) | ( ( uint )buf[ 2 ] << 24 );
+
                 cfr.BaseStream.Position = opos;
             }
 
