@@ -34,65 +34,74 @@ namespace CodeWalker.GameFiles
 
         public static bool IsGen9 { get; set; } //not ideal for this to be static, but it's most convenient for ResourceData
 
-        public void Init(string folder, bool gen9, Action<string> updateStatus, Action<string> errorLog, bool rootOnly = false, bool buildIndex = true)
+        /// <summary>
+        /// 에셋 디렉토리로 부터 RPF 파일들을 스캔하고 인덱스를 생성합니다.
+        /// </summary>
+        /// <param name="folder">최상위 리소스 폴더. 대부분 게임 설치 폴더</param>
+        /// <param name="gen9">GTA5 Enhanced 여부</param>
+        /// <param name="updateStatus"></param>
+        /// <param name="errorLog"></param>
+        /// <param name="rootOnly"></param>
+        /// <param name="buildIndex"></param>
+        public void Init( string folder, bool gen9, Action<string> updateStatus, Action<string> errorLog, bool rootOnly = false, bool buildIndex = true)
         {
-            UpdateStatus = updateStatus;
-            ErrorLog = errorLog;
-            IsGen9 = gen9;
+            UpdateStatus        = updateStatus;
+            ErrorLog            = errorLog;
+            IsGen9              = gen9;
 
-            string replpath = folder + "\\";
-            var sopt = rootOnly ? SearchOption.TopDirectoryOnly : SearchOption.AllDirectories;
-            string[] allfiles = Directory.GetFiles(folder, "*.rpf", sopt);
+            string replpath     = folder + "\\";
+            var sopt            = rootOnly ? SearchOption.TopDirectoryOnly : SearchOption.AllDirectories;
+            string[] allfiles   = Directory.GetFiles( folder, "*.rpf", sopt );
 
-            BaseRpfs = new List<RpfFile>();
-            ModRpfs = new List<RpfFile>();
-            DlcRpfs = new List<RpfFile>();
-            AllRpfs = new List<RpfFile>();
-            DlcNoModRpfs = new List<RpfFile>();
-            AllNoModRpfs = new List<RpfFile>();
-            RpfDict = new Dictionary<string, RpfFile>();
-            EntryDict = new Dictionary<string, RpfEntry>();
-            ModRpfDict = new Dictionary<string, RpfFile>();
-            ModEntryDict = new Dictionary<string, RpfEntry>();
+            BaseRpfs            = new List<RpfFile>();
+            ModRpfs             = new List<RpfFile>();
+            DlcRpfs             = new List<RpfFile>();
+            AllRpfs             = new List<RpfFile>();
+            DlcNoModRpfs        = new List<RpfFile>();
+            AllNoModRpfs        = new List<RpfFile>();
+            RpfDict             = new Dictionary<string, RpfFile>();
+            EntryDict           = new Dictionary<string, RpfEntry>();
+            ModRpfDict          = new Dictionary<string, RpfFile>();
+            ModEntryDict        = new Dictionary<string, RpfEntry>();
 
-            foreach (string rpfpath in allfiles)
+            foreach ( string rpfpath in allfiles ) // 모든 RPF 파일 순회
             {
                 try
                 {
-                    RpfFile rf = new RpfFile(rpfpath, rpfpath.Replace(replpath, ""));
+                    RpfFile rf  = new RpfFile( rpfpath, rpfpath.Replace( replpath, "" ) );
 
-                    if (ExcludePaths != null)
+                    if ( ExcludePaths != null )
                     {
                         bool excl = false;
-                        for (int i = 0; i < ExcludePaths.Length; i++)
+                        for ( int i = 0 ; i < ExcludePaths.Length ; i++ )
                         {
-                            if (rf.Path.StartsWith(ExcludePaths[i]))
+                            if ( rf.Path.StartsWith( ExcludePaths[ i ] ) )
                             {
                                 excl = true;
                                 break;
                             }
                         }
-                        if (excl) continue; //skip files in exclude paths.
+                        if ( excl ) continue; //skip files in exclude paths.
                     }
 
-                    rf.ScanStructure(updateStatus, errorLog);
+                    rf.ScanStructure( updateStatus, errorLog );
 
-                    if (rf.LastException != null) //incase of corrupted rpf (or renamed NG encrypted RPF)
+                    if ( rf.LastException != null ) //incase of corrupted rpf (or renamed NG encrypted RPF)
                     {
                         continue;
                     }
 
-                    AddRpfFile(rf, false, false);
+                    AddRpfFile( rf, false, false );
                 }
-                catch (Exception ex)
+                catch ( Exception ex )
                 {
-                    errorLog(rpfpath + ": " + ex.ToString());
+                    errorLog( rpfpath + ": " + ex.ToString() );
                 }
             }
 
-            if (buildIndex)
+            if ( buildIndex )
             {
-                updateStatus("Building jenkindex...");
+                updateStatus( "Building jenkindex..." );
                 BuildBaseJenkIndex();
             }
 

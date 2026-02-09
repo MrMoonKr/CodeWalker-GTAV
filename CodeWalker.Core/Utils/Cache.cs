@@ -124,7 +124,9 @@ namespace CodeWalker
             }
         }
 
-
+        /// <summary>
+        /// 특정 시간이 경과한 캐시 항목을 제거합니다.
+        /// </summary>
         public void Compact()
         {
             var oldlln = loadedList.First;
@@ -143,11 +145,15 @@ namespace CodeWalker
 
     }
 
+    /// <summary>
+    /// 캐시 가능한 항목의 기본 클래스입니다.
+    /// </summary>
+    /// <typeparam name="TKey">캐시 구분용 키</typeparam>
     public abstract class Cacheable<TKey>
     {
-        public TKey Key;
-        public DateTime LastUseTime;
-        public long MemoryUsage;
+        public TKey         Key;
+        public DateTime     LastUseTime;
+        public long         MemoryUsage;
     }
 
 }

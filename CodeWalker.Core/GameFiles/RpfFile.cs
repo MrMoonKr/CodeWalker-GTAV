@@ -64,8 +64,8 @@ namespace CodeWalker.GameFiles
         /// <summary>
         /// 파일 형태로 된 RPF 패키지를 엽니다.
         /// </summary>
-        /// <param name="fpath"></param>
-        /// <param name="relpath"></param>
+        /// <param name="fpath">전체 경로명 (ex) (설치폴더)\\xxx.rpf</param>
+        /// <param name="relpath">상대 경로명 (ex) xxx.rpf</param>
         public RpfFile( string fpath , string relpath ) //for a ROOT filesystem RPF
         {
             FileInfo fi         = new FileInfo( fpath );
@@ -319,13 +319,13 @@ namespace CodeWalker.GameFiles
         {
             ReadHeader( br );
 
-            GrandTotalRpfCount = 1; //count this file..
-            GrandTotalFileCount = 1; //start with this one.
-            GrandTotalFolderCount = 0;
-            GrandTotalResourceCount = 0;
-            GrandTotalBinaryFileCount = 0;
+            GrandTotalRpfCount          = 1; //count this file..
+            GrandTotalFileCount         = 1; //start with this one.
+            GrandTotalFolderCount       = 0;
+            GrandTotalResourceCount     = 0;
+            GrandTotalBinaryFileCount   = 0;
 
-            Children = new List<RpfFile>();
+            Children                    = new List<RpfFile>();
 
             updateStatus?.Invoke( "Scanning " + Path + "..." );
 
@@ -2141,20 +2141,25 @@ namespace CodeWalker.GameFiles
             return dirpath;
         }
 
-        private static bool IsValidPath(string path)
+        /// <summary>
+        /// 아카이브 에셋의 경로가 유효한지 여부를 반환합니다.
+        /// </summary>
+        /// <param name="path">에셋 경로 문자열</param>
+        /// <returns></returns>
+        private static bool IsValidPath( string path )
         {
-            if (string.IsNullOrEmpty(path)) return false;
-            if (path.Length > 500) return false; //a long path is most likely an attempt to crash CW, so skip it
+            if ( string.IsNullOrEmpty( path ) ) return false;
+            if ( path.Length > 500 ) return false; //a long path is most likely an attempt to crash CW, so skip it
             var dirc = 0;
-            for (int i = 0; i < path.Length; i++)
+            for ( int i = 0 ; i < path.Length ; i++ )
             {
                 var c = path[i];
-                if (c == ':') return false; //what kind of person puts this in a file name?
-                if (c == ';') return false;
-                if (c == '/') dirc++;
-                if (c == '\\') dirc++;
+                if ( c == ':' ) return false; //what kind of person puts this in a file name?
+                if ( c == ';' ) return false;
+                if ( c == '/' ) dirc++;
+                if ( c == '\\' ) dirc++;
             }
-            if (dirc > 20) return false;//20 levels deep.. are you mad?!?
+            if ( dirc > 20 ) return false;//20 levels deep.. are you mad?!?
             return true;
         }
 
